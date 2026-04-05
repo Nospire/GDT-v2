@@ -80,17 +80,22 @@ fi
 
 # ===== Check what needs to be done =====
 NEEDS_UPDATE=true
+VERSION_FILE="$INSTALL_DIR/.version"
 
 CURRENT_VER=""
-if [[ -f "$INSTALL_DIR/gdt" ]]; then
-    CURRENT_VER=$("$INSTALL_DIR/gdt" --version 2>/dev/null || echo "")
+if [[ -f "$VERSION_FILE" ]]; then
+    CURRENT_VER=$(cat "$VERSION_FILE")
 fi
 
 LATEST_VER=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" \
     | grep '"tag_name"' | cut -d'"' -f4 || echo "")
 
-if [[ -n "$CURRENT_VER" && -n "$LATEST_VER" && "$CURRENT_VER" == "$LATEST_VER" ]]; then
-    NEEDS_UPDATE=false
+if [[ -n "$CURRENT_VER" && "$CURRENT_VER" == "$LATEST_VER" ]]; then
+    ok "$(msg "GDT актуален ($CURRENT_VER). Запускаем..." "GDT is up to date ($CURRENT_VER). Launching...")"
+    nohup "$INSTALL_DIR/gdt" >/dev/null 2>&1 &
+    disown
+    sleep 1
+    exit 0
 fi
 
 # ===== 4. Check webkit (no sudo needed) =====
@@ -167,6 +172,8 @@ else
         chmod +x "$INSTALL_DIR/modules/${mod}"
         ok "$(msg "${mod} готов" "${mod} ready")"
     done
+
+    echo "$LATEST_VER" > "$VERSION_FILE"
 fi
 
 # ===== 7. Config =====
