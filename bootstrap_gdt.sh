@@ -150,31 +150,27 @@ if [[ "$NEEDS_SUDO" == "true" ]]; then
 fi
 
 # ===== 6. Download binaries =====
-if [[ "$NEEDS_UPDATE" == "false" ]]; then
-    ok "$(msg "GDT уже актуален ($LATEST_VER)" "GDT is up to date ($LATEST_VER)")"
-else
-    info "$(msg "Создаём ${INSTALL_DIR}..." "Creating ${INSTALL_DIR}...")"
-    mkdir -p "$INSTALL_DIR/modules"
+info "$(msg "Создаём ${INSTALL_DIR}..." "Creating ${INSTALL_DIR}...")"
+mkdir -p "$INSTALL_DIR/modules"
 
-    info "$(msg "Скачиваем gdt..." "Downloading gdt...")"
-    curl -fsSL --progress-bar -o "$INSTALL_DIR/gdt" "${BASE_URL}/gdt"
-    chmod +x "$INSTALL_DIR/gdt"
-    ok "$(msg "gdt готов" "gdt ready")"
+info "$(msg "Скачиваем gdt..." "Downloading gdt...")"
+curl -fsSL --progress-bar -o "$INSTALL_DIR/gdt" "${BASE_URL}/gdt"
+chmod +x "$INSTALL_DIR/gdt"
+ok "$(msg "gdt готов" "gdt ready")"
 
-    info "$(msg "Скачиваем sing-box..." "Downloading sing-box...")"
-    curl -fsSL --progress-bar -o "$INSTALL_DIR/sing-box" "${BASE_URL}/sing-box"
-    chmod +x "$INSTALL_DIR/sing-box"
-    ok "$(msg "sing-box готов" "sing-box ready")"
+info "$(msg "Скачиваем sing-box..." "Downloading sing-box...")"
+curl -fsSL --progress-bar -o "$INSTALL_DIR/sing-box" "${BASE_URL}/sing-box"
+chmod +x "$INSTALL_DIR/sing-box"
+ok "$(msg "sing-box готов" "sing-box ready")"
 
-    info "$(msg "Скачиваем модули..." "Downloading modules...")"
-    for mod in steamos-update flatpak-update openh264-fix; do
-        curl -fsSL --progress-bar -o "$INSTALL_DIR/modules/${mod}" "${BASE_URL}/${mod}"
-        chmod +x "$INSTALL_DIR/modules/${mod}"
-        ok "$(msg "${mod} готов" "${mod} ready")"
-    done
+info "$(msg "Скачиваем модули..." "Downloading modules...")"
+for mod in steamos-update flatpak-update openh264-fix; do
+    curl -fsSL --progress-bar -o "$INSTALL_DIR/modules/${mod}" "${BASE_URL}/${mod}"
+    chmod +x "$INSTALL_DIR/modules/${mod}"
+    ok "$(msg "${mod} готов" "${mod} ready")"
+done
 
-    echo "$LATEST_VER" > "$VERSION_FILE"
-fi
+echo "$LATEST_VER" > "$INSTALL_DIR/.version"
 
 # ===== 7. Config =====
 mkdir -p "$CONFIG_DIR"
@@ -214,5 +210,4 @@ echo ""
 # ===== 9. Launch GDT =====
 nohup "$INSTALL_DIR/gdt" >/dev/null 2>&1 &
 disown
-sleep 1
 exit 0
