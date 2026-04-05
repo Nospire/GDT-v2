@@ -19,6 +19,7 @@ import {
   OpenTavern,
   GetVersion,
   CheckUpdate,
+  LaunchUpdater,
 } from '../wailsjs/go/main/App.js';
 
 import { EventsOn, BrowserOpenURL } from '../wailsjs/runtime/runtime.js';
@@ -547,6 +548,99 @@ document.getElementById('btn-tavern').addEventListener('click', () => {
   OpenTavern().catch(err => logLine('tavern: ' + err, 'err'));
 });
 
+// ---- greetings --------------------------------------------------------------
+
+const greetings = {
+  ru: [
+    'У Каджита есть товар, если у тебя есть монеты, друг!',
+    'Странник выглядит усталым. Может, отдохнёшь у костра?',
+    'Каджит не кусается. Обычно.',
+    'Этот Каджит слышал о твоих подвигах. Впечатляет.',
+    'Хочешь купить что-нибудь? Нет? Просто смотришь? Хорошо.',
+  ],
+  en: [
+    'Khajiit has wares, if you have coin.',
+    'You look tired, traveller. Rest by the fire.',
+    'Khajiit does not bite. Usually.',
+    'This one has heard of your exploits. Impressive.',
+    'Interested in a purchase? No? Just looking? That is fine.',
+  ],
+};
+
+function randomGreeting(lang) {
+  const list = greetings[lang] || greetings.ru;
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+// ---- update checker ---------------------------------------------------------
+
+const mikePhrases = {
+  ru: [
+    'Обновление вышло. Я в этом уверен. Честно.',
+    'Новая версия. Она лучше. Намного. Доверяй мне.',
+    'Это обновление изменит всё. Ну, или что-то изменит.',
+    'Я бы обновился. Если бы был тобой. А я не ты.',
+    'Новая версия вышла. Это правда. На этот раз.',
+  ],
+  en: [
+    "Update is out. I'm sure of it. Honest.",
+    "New version. It's better. Much better. Trust me.",
+    'This update will change everything. Or something.',
+    'I would update. If I were you. Which I\'m not.',
+    "New version is out. It's true. This time.",
+  ],
+};
+
+async function checkAndShowUpdate() {
+  const current = await GetVersion().catch(() => '');
+  const ver = document.getElementById('ver');
+  ver.textContent = current;
+
+  const latest = await CheckUpdate().catch(() => '');
+  if (!latest || latest === current) return;
+
+  const lang = getCurrentLang();
+  ver.style.cursor = 'pointer';
+  ver.style.color = 'var(--accent)';
+  ver.textContent = current + ' → ' + latest + ' ↑';
+
+  ver.addEventListener('click', () => {
+    const phrases = mikePhrases[lang] || mikePhrases.ru;
+    const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+
+    const overlay = document.createElement('div');
+    overlay.className = 'sudo-overlay';
+    overlay.innerHTML = `
+      <div class="sudo-box" style="width:360px">
+        <div class="sudo-title">
+          ${lang === 'ru' ? 'Доступно обновление ' : 'Update available '} ${latest}
+        </div>
+        <div class="sudo-hint" style="font-style:italic;margin-bottom:20px">
+          "${phrase}"
+        </div>
+        <div class="sudo-hint">
+          ${lang === 'ru'
+            ? 'GDT закроется и запустится установщик обновления.'
+            : 'GDT will close and launch the updater.'}
+        </div>
+        <div class="sudo-btns">
+          <button class="sudo-cancel" id="upd-cancel">
+            ${lang === 'ru' ? 'Позже' : 'Later'}
+          </button>
+          <button class="sudo-ok" id="upd-ok">
+            ${lang === 'ru' ? 'Обновить' : 'Update'}
+          </button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('#upd-cancel').onclick = () =>
+      document.body.removeChild(overlay);
+
+    overlay.querySelector('#upd-ok').onclick = () => LaunchUpdater();
+  });
+}
+
 // ---- init -------------------------------------------------------------------
 
 async function init() {
@@ -570,22 +664,9 @@ async function init() {
     btnLang.textContent = getCurrentLang().toUpperCase();
     renderSidebar(modules || []);
     updateSudo(sudoState || 'none');
-    logLine(t('kajit'), 'info');
+    logLine(randomGreeting(getCurrentLang()), 'info');
     refreshStatus();
-
-    const current = await GetVersion();
-    const ver = document.getElementById('ver');
-    ver.textContent = current;
-
-    const latest = await CheckUpdate().catch(() => '');
-    if (latest && latest !== current) {
-      ver.style.cursor = 'pointer';
-      ver.style.color = 'var(--accent)';
-      ver.title = latest;
-      ver.textContent = current + ' → ' + latest + ' ↑';
-      ver.addEventListener('click', () =>
-        BrowserOpenURL('https://github.com/Nospire/GDT-v2/releases/latest'));
-    }
+    checkAndShowUpdate();
 
   } catch (err) {
     logLine('init error: ' + err, 'err');

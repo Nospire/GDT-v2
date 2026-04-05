@@ -38,6 +38,10 @@ export function IsProxyRunning() {
   return window['go']['main']['App']['IsProxyRunning']();
 }
 
+export function LaunchUpdater() {
+  return window['go']['main']['App']['LaunchUpdater']();
+}
+
 export function OpenTavern() {
   return window['go']['main']['App']['OpenTavern']();
 }

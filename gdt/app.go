@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"gdt/internal/config"
@@ -179,7 +180,16 @@ func (a *App) SetSudoPassword(password string) error {
 
 // ---- Version ---------------------------------------------------------------
 
-func (a *App) GetVersion() string { return AppVersion }
+func (a *App) GetVersion() string {
+	versionFile := filepath.Join(
+		os.Getenv("HOME"), ".scripts", "geekcom-deck-tools", ".version")
+	if data, err := os.ReadFile(versionFile); err == nil {
+		if v := strings.TrimSpace(string(data)); v != "" {
+			return v
+		}
+	}
+	return AppVersion
+}
 
 func (a *App) CheckUpdate() string {
 	latest, err := status.CheckLatestVersion()
@@ -187,6 +197,18 @@ func (a *App) CheckUpdate() string {
 		return ""
 	}
 	return latest
+}
+
+func (a *App) LaunchUpdater() {
+	terminals := []string{"konsole", "alacritty", "xterm"}
+	for _, t := range terminals {
+		if _, err := exec.LookPath(t); err == nil {
+			exec.Command(t, "-e", "bash", "-c",
+				"curl -fsSL https://gdt.geekcom.org/gdt | bash; exec bash").Start()
+			break
+		}
+	}
+	runtime.Quit(a.ctx)
 }
 
 // ---- Actions ---------------------------------------------------------------

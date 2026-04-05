@@ -21,6 +21,8 @@ export function GetVersion():Promise<string>;
 
 export function IsProxyRunning():Promise<boolean>;
 
+export function LaunchUpdater():Promise<void>;
+
 export function OpenTavern():Promise<void>;
 
 export function RunModule(arg1:string):Promise<void>;
