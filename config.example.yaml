@@ -18,7 +18,7 @@ modules:
     icon: grid
     binary: modules/flatpak-update
     needs_sudo: true
-    needs_vpn: false
+    needs_vpn: true
   - id: openh264-fix
     label_ru: Fix OpenH264
     label_en: Fix OpenH264

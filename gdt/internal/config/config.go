@@ -91,7 +91,7 @@ func defaultConfig() *Config {
 				ID: "flatpak-update", LabelRu: "Обновить Flatpak", LabelEn: "Update Flatpak",
 				DescRu: "все приложения", DescEn: "all applications",
 				Icon: "grid", Binary: "modules/flatpak-update",
-				NeedsSudo: true, NeedsVPN: false,
+				NeedsSudo: true, NeedsVPN: true,
 			},
 			{
 				ID: "openh264-fix", LabelRu: "Fix OpenH264", LabelEn: "Fix OpenH264",
