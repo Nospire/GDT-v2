@@ -101,7 +101,7 @@ export GDT_SUDO_PASS
 # ===== 5. Check webkit2gtk-4.1 =====
 info "$(msg "Проверяем webkit2gtk-4.1..." "Checking webkit2gtk-4.1...")"
 
-if ! ldconfig -p 2>/dev/null | grep -q 'webkit2gtk-4.1'; then
+if ! pacman -Q webkit2gtk-4.1 >/dev/null 2>&1; then
     msg "webkit2gtk-4.1 не найден. Устанавливаем..." \
         "webkit2gtk-4.1 not found. Installing..."
 
@@ -112,7 +112,7 @@ if ! ldconfig -p 2>/dev/null | grep -q 'webkit2gtk-4.1'; then
         exit 1
     fi
 
-    if ! printf '%s\n' "$GDT_SUDO_PASS" | sudo -S -k -p '' pacman -S --noconfirm webkit2gtk-4.1 2>&1; then
+    if ! printf '%s\n' "$GDT_SUDO_PASS" | sudo -S -k -p '' pacman -S --noconfirm --needed webkit2gtk-4.1 2>&1; then
         err "$(msg "Не удалось установить webkit2gtk-4.1." "Failed to install webkit2gtk-4.1.")"
         exit 1
     fi
