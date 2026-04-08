@@ -32,8 +32,15 @@ func main() {
 		log("WARN: системные приложения не обновились, продолжаем...")
 	}
 
+	proxyAddr := "http://127.0.0.1:7890"
 	log("Обновляем пользовательские Flatpak приложения...")
-	rc = runStream("flatpak", "update", "-y", "--user")
+	rc = runStream("runuser", "-u", "deck", "--",
+		"env",
+		"http_proxy="+proxyAddr,
+		"https_proxy="+proxyAddr,
+		"HTTP_PROXY="+proxyAddr,
+		"HTTPS_PROXY="+proxyAddr,
+		"flatpak", "update", "-y", "--user")
 	if rc != 0 {
 		log("Ошибка обновления пользовательских приложений")
 		done(1)

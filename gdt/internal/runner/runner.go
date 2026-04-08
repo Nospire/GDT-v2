@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -113,6 +114,12 @@ func (r *Runner) Run(ctx context.Context, modulePath string) error {
 	stdinPayload := r.sudo.Password() + "\n" + string(envelope) + "\n"
 
 	cmd := exec.CommandContext(runCtx, "sudo", "-S", "-k", "-p", "", binary)
+	cmd.Env = append(os.Environ(),
+		"http_proxy="+os.Getenv("http_proxy"),
+		"https_proxy="+os.Getenv("https_proxy"),
+		"HTTP_PROXY="+os.Getenv("HTTP_PROXY"),
+		"HTTPS_PROXY="+os.Getenv("HTTPS_PROXY"),
+	)
 	cmd.Stdin = strings.NewReader(stdinPayload)
 
 	stdout, err := cmd.StdoutPipe()

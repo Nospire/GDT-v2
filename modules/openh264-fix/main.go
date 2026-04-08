@@ -23,12 +23,26 @@ func main() {
 		fatal("flatpak не найден")
 	}
 
+	proxyAddr := "http://127.0.0.1:7890"
+
 	// Шаг 1 — добавляем flathub в user если нет
 	log("Проверяем flathub remote...")
-	out, _ := exec.Command("flatpak", "remotes", "--user").Output()
+	out, _ := exec.Command("runuser", "-u", "deck", "--",
+		"env",
+		"http_proxy="+proxyAddr,
+		"https_proxy="+proxyAddr,
+		"HTTP_PROXY="+proxyAddr,
+		"HTTPS_PROXY="+proxyAddr,
+		"flatpak", "remotes", "--user").Output()
 	if !strings.Contains(string(out), "flathub") {
 		log("Добавляем flathub remote в user space...")
-		rc := runStream("flatpak", "remote-add", "--user", "--if-not-exists",
+		rc := runStream("runuser", "-u", "deck", "--",
+			"env",
+			"http_proxy="+proxyAddr,
+			"https_proxy="+proxyAddr,
+			"HTTP_PROXY="+proxyAddr,
+			"HTTPS_PROXY="+proxyAddr,
+			"flatpak", "remote-add", "--user", "--if-not-exists",
 			"flathub", "https://dl.flathub.org/repo/flathub.flatpakrepo")
 		if rc != 0 {
 			fatal("Не удалось добавить flathub remote")
@@ -44,14 +58,20 @@ func main() {
 		"org.freedesktop.Platform.openh264")
 
 	log("Снимаем маску пользовательского репозитория...")
-	exec.Command("flatpak", "mask", "--user", "--remove",
+	exec.Command("runuser", "-u", "deck", "--", "flatpak", "mask", "--user", "--remove",
 		"org.freedesktop.Platform.openh264").Run()
 
 	// Шаг 3 — устанавливаем в USER (без sudo, flathub теперь есть)
 	state("installing")
-	log("Устанавливаем org.freedesktop.Platform.openh264//2.5.1 (user)...")
-	rc := runStream("flatpak", "install", "-y", "--user", "flathub",
-		"org.freedesktop.Platform.openh264//2.5.1")
+	log("Устанавливаем org.freedesktop.Platform.openh264/x86_64/2.5.1 (user)...")
+	rc := runStream("runuser", "-u", "deck", "--",
+		"env",
+		"http_proxy="+proxyAddr,
+		"https_proxy="+proxyAddr,
+		"HTTP_PROXY="+proxyAddr,
+		"HTTPS_PROXY="+proxyAddr,
+		"flatpak", "install", "-y", "--user", "flathub",
+		"org.freedesktop.Platform.openh264/x86_64/2.5.1")
 	if rc != 0 {
 		// "already installed" даёт ненулевой код — проверяем через list
 		log("Установка вернула ненулевой код, проверяем наличие пакета...")
@@ -60,15 +80,11 @@ func main() {
 	// Шаг 4 — проверяем через flatpak list --user
 	state("verifying")
 	log("Проверяем установку...")
-	listOut, err := exec.Command("flatpak", "list", "--user").Output()
-	if err != nil || !strings.Contains(string(listOut), "openh264") {
-		fatal("openh264 не найден в пользовательских пакетах после установки")
-	}
-	log("openh264 установлен успешно:")
-	for _, line := range strings.Split(strings.TrimSpace(string(listOut)), "\n") {
-		if strings.Contains(line, "openh264") {
-			log("  " + line)
-		}
+	userOut, _ := exec.Command("runuser", "-u", "deck", "--", "flatpak", "list", "--user", "--columns=application,branch").Output()
+	sysOut, _ := exec.Command("flatpak", "list", "--system", "--columns=application,branch").Output()
+	allOut := string(userOut) + string(sysOut)
+	if !strings.Contains(allOut, "openh264") {
+		fatal("openh264 не найден после установки")
 	}
 
 	progress(100)
@@ -96,6 +112,10 @@ func runSudo(pass, cmd string, args ...string) int {
 
 func runStream(cmd string, args ...string) int {
 	c := exec.Command(cmd, args...)
+	return runStreamCmd(c)
+}
+
+func runStreamCmd(c *exec.Cmd) int {
 	stdout, _ := c.StdoutPipe()
 	stderr, _ := c.StderrPipe()
 	c.Start()

@@ -378,6 +378,7 @@ func (a *App) startSession(action string) error {
 	proxyAddr := fmt.Sprintf("http://127.0.0.1:%d", singbox.ProxyPort)
 	os.Setenv("http_proxy", proxyAddr)
 	os.Setenv("https_proxy", proxyAddr)
+	time.Sleep(2 * time.Second)
 
 	// Run heartbeat until session ends
 	hbCtx, hbCancel := context.WithCancel(context.Background())
